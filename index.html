@@ -73,16 +73,15 @@
   }
 
   function generatePDF() {
-    const resultsElement = document.getElementById("pdfContent");
-    if (!resultsElement || !resultsElement.innerText.trim()) {
+    const resultsElement = document.getElementById("results");
+    if (!resultsElement.innerHTML.trim()) {
       alert("Please calculate first before downloading PDF.");
       return;
     }
 
     html2canvas(resultsElement, {
       scale: 2,
-      useCORS: true,
-      backgroundColor: "#ffffff"
+      useCORS: true
     }).then(canvas => {
       const imgData = canvas.toDataURL("image/png");
       const { jsPDF } = window.jspdf;
@@ -98,7 +97,7 @@
       const imgWidth = pageWidth - 40;
       const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
       const x = 20;
-      const y = 30;
+      const y = (pageHeight - imgHeight) / 2;
 
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(16);
