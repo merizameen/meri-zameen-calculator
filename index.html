@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stamp Duty Calculator | MeriZameen.in</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #eef6f9;
+      padding: 20px;
+      margin: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: #fff;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    h2 {
+      color: #e31e24;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    label {
+      margin-top: 15px;
+      font-weight: 600;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 20px;
+      padding: 12px;
+      background-color: #e31e24;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      width: 48%;
+    }
+    button:hover {
+      background-color: #c51a1f;
+    }
+    .button-group {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    .results {
+      margin-top: 25px;
+      padding: 15px;
+      background-color: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Commercial Rent Stamp Duty Calculator</h2>
+
+    <label for="monthlyRent">Monthly Rent:</label>
+    <input type="number" id="monthlyRent" placeholder="e.g. 100000" />
+
+    <label for="leaseType">Lease Period Type:</label>
+    <select id="leaseType">
+      <option value="years">Years</option>
+      <option value="months">Months</option>
+    </select>
+
+    <label for="leasePeriod">Lease Period:</label>
+    <input type="number" id="leasePeriod" placeholder="e.g. 3 or 36" />
+
+    <label for="rentIncrease">Rent Increase %:</label>
+    <input type="number" id="rentIncrease" placeholder="e.g. 5" />
+
+    <label for="increaseType">Increase Type:</label>
+    <select id="increaseType">
+      <option value="everyYear">Every Year</option>
+      <option value="everyXYear">Every X Years</option>
+    </select>
+
+    <label for="increaseEvery">Increase After Every (Years):</label>
+    <input type="number" id="increaseEvery" placeholder="e.g. 2" />
+
+    <div class="button-group">
+      <button onclick="calculateDuty()">Calculate</button>
+      <button onclick="generatePDF()">Download PDF</button>
+    </div>
+
+    <div class="results" id="results"></div>
+  </div>
+
+  <script>
+    function calculateDuty() {
+      const monthlyRent = parseFloat(document.getElementById('monthlyRent').value);
+      const leasePeriod = parseInt(document.getElementById('leasePeriod').value);
+      const leaseType = document.getElementById('leaseType').value;
+      const rentIncrease = parseFloat(document.getElementById('rentIncrease').value) || 0;
+      const increaseType = document.getElementById('increaseType').value;
+      const increaseEvery = parseInt(document.getElementById('increaseEvery').value) || 1;
+
+      if (!monthlyRent || !leasePeriod) {
+        alert('Please enter Monthly Rent and Lease Period.');
+        return;
+      }
+
+      let months = leaseType === 'years' ? leasePeriod * 12 : leasePeriod;
+      let rentTotal = 0;
+      let currentRent = monthlyRent;
+
+      for (let i = 1; i <= months; i++) {
+        rentTotal += currentRent;
+        if (increaseType === 'everyYear' && i % 12 === 0) {
+          currentRent += (currentRent * rentIncrease) / 100;
+        } else if (increaseType === 'everyXYear' && increaseEvery > 0 && i % (increaseEvery * 12) === 0) {
+          currentRent += (currentRent * rentIncrease) / 100;
+        }
+      }
+
+      const annualAverage = (rentTotal / months) * 12;
+      const stampDuty = Math.ceil(rentTotal * 0.04);
+      const registrationCharge = 1100;
+      const totalCharges = stampDuty + registrationCharge;
+      const shareAmount = totalCharges / 2;
+
+      window.calculationOutput = {
+        monthlyRent,
+        leasePeriod: months,
+        rentTotal,
+        annualAverage,
+        stampDuty,
+        registrationCharge,
+        totalCharges,
+        shareAmount
+      };
+
+      document.getElementById('results').innerHTML = `
+        <strong>Total Rent:</strong> ₹${rentTotal.toFixed(2)}<br>
+        <strong>Annual Avg Rent:</strong> ₹${annualAverage.toFixed(2)}<br>
+        <strong>Stamp Duty (4%):</strong> ₹${stampDuty}<br>
+        <strong>Registration Charges:</strong> ₹${registrationCharge}<br>
+        <strong>Total Charges:</strong> ₹${totalCharges}<br>
+        <strong>50% Share (if shared):</strong> ₹${shareAmount.toFixed(2)}
+      `;
+    }
+
+    async function generatePDF() {
+      if (!window.calculationOutput) {
+        alert('Please calculate first');
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      doc.setFontSize(16);
+      doc.text('Stamp Duty Calculation Report', 20, 20);
+
+      doc.setFontSize(12);
+      let y = 40;
+      for (const [key, value] of Object.entries(window.calculationOutput)) {
+        let label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+        doc.text(`${label}: ₹${value.toFixed(2)}`, 20, y);
+        y += 10;
+      }
+
+      y += 10;
+      doc.setFontSize(10);
+      doc.text('Report generated by MeriZameen.in', 20, y);
+
+      doc.save('MeriZameen_StampDuty_Report.pdf');
+    }
+  </script>
+</body>
+</html>
