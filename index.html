@@ -1,206 +1,118 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Stamp Duty Calculator | MeriZameen.in</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #eef6f9;
-      padding: 20px;
-      margin: 0;
+<script>
+  function calculateDuty() {
+    const monthlyRent = parseFloat(document.getElementById('monthlyRent').value);
+    const leasePeriod = parseInt(document.getElementById('leasePeriod').value);
+    const leaseType = document.getElementById('leaseType').value;
+    const rentIncrease = parseFloat(document.getElementById('rentIncrease').value) || 0;
+    const increaseType = document.getElementById('increaseType').value;
+    const increaseEvery = parseInt(document.getElementById('increaseEvery').value) || 1;
+
+    if (!monthlyRent || !leasePeriod) {
+      alert('Please enter Monthly Rent and Lease Period.');
+      return;
     }
-    .container {
-      max-width: 600px;
-      margin: auto;
-      background: #fff;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-    h2 {
-      color: #006400;
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    label {
-      margin-top: 15px;
-      font-weight: 600;
-    }
-    input, select {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      box-sizing: border-box;
-    }
-    button {
-      margin-top: 20px;
-      padding: 12px;
-      background-color: #e31e24;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      width: 48%;
-    }
-    button:hover {
-      background-color: #c51a1f;
-    }
-    .button-group {
-      display: flex;
-      justify-content: space-between;
-      flex-wrap: wrap;
-    }
-    .results {
-      margin-top: 25px;
-      padding: 15px;
-      background-color: #f9f9f9;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 15px;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h2>Commercial Rent Stamp Duty Calculator</h2>
 
-    <label for="monthlyRent">Monthly Rent:</label>
-    <input type="number" id="monthlyRent" placeholder="e.g. 100000" />
+    let months = leaseType === 'years' ? leasePeriod * 12 : leasePeriod;
+    let rentTotal = 0;
+    let currentRent = monthlyRent;
 
-    <label for="leaseType">Lease Period Type:</label>
-    <select id="leaseType">
-      <option value="years">Years</option>
-      <option value="months">Months</option>
-    </select>
-
-    <label for="leasePeriod">Lease Period:</label>
-    <input type="number" id="leasePeriod" placeholder="e.g. 3 or 36" />
-
-    <label for="rentIncrease">Rent Increase %:</label>
-    <input type="number" id="rentIncrease" placeholder="e.g. 5" />
-
-    <label for="increaseType">Increase Type:</label>
-    <select id="increaseType">
-      <option value="everyYear">Every Year</option>
-      <option value="everyXYear">Every X Years</option>
-    </select>
-
-    <label for="increaseEvery">Increase After Every (Years):</label>
-    <input type="number" id="increaseEvery" placeholder="e.g. 2" />
-
-    <div class="button-group">
-      <button onclick="calculateDuty()">Calculate</button>
-      <button onclick="generatePDF()">Download PDF</button>
-    </div>
-
-    <div id="pdfContent">
-      <div class="results" id="results"></div>
-    </div>
-  </div>
-
-  <script>
-    function calculateDuty() {
-      const monthlyRent = parseFloat(document.getElementById('monthlyRent').value);
-      const leasePeriod = parseInt(document.getElementById('leasePeriod').value);
-      const leaseType = document.getElementById('leaseType').value;
-      const rentIncrease = parseFloat(document.getElementById('rentIncrease').value) || 0;
-      const increaseType = document.getElementById('increaseType').value;
-      const increaseEvery = parseInt(document.getElementById('increaseEvery').value) || 1;
-
-      if (!monthlyRent || !leasePeriod) {
-        alert('Please enter Monthly Rent and Lease Period.');
-        return;
+    for (let i = 1; i <= months; i++) {
+      rentTotal += currentRent;
+      if (increaseType === 'everyYear' && i % 12 === 0) {
+        currentRent += (currentRent * rentIncrease) / 100;
+      } else if (increaseType === 'everyXYear' && increaseEvery > 0 && i % (increaseEvery * 12) === 0) {
+        currentRent += (currentRent * rentIncrease) / 100;
       }
-
-      let months = leaseType === 'years' ? leasePeriod * 12 : leasePeriod;
-      let rentTotal = 0;
-      let currentRent = monthlyRent;
-
-      for (let i = 1; i <= months; i++) {
-        rentTotal += currentRent;
-        if (increaseType === 'everyYear' && i % 12 === 0) {
-          currentRent += (currentRent * rentIncrease) / 100;
-        } else if (increaseType === 'everyXYear' && increaseEvery > 0 && i % (increaseEvery * 12) === 0) {
-          currentRent += (currentRent * rentIncrease) / 100;
-        }
-      }
-
-      const annualAverage = (rentTotal / months) * 12;
-      const stampDuty = Math.ceil(rentTotal * 0.04);
-      const registrationCharge = 1100;
-      const totalCharges = stampDuty + registrationCharge;
-      const shareAmount = totalCharges / 2;
-
-      window.calculationOutput = {
-        monthlyRent,
-        leasePeriod: months,
-        rentTotal,
-        annualAverage,
-        stampDuty,
-        registrationCharge,
-        totalCharges,
-        shareAmount
-      };
-
-      document.getElementById('results').innerHTML = `
-        <strong>Total Rent:</strong> ₹${rentTotal.toFixed(2)}<br>
-        <strong>Annual Avg Rent:</strong> ₹${annualAverage.toFixed(2)}<br>
-        <strong>Stamp Duty (4%):</strong> ₹${stampDuty}<br>
-        <strong>Registration Charges:</strong> ₹${registrationCharge}<br>
-        <strong>Total Charges:</strong> ₹${totalCharges}<br>
-        <strong>50% Share (if shared):</strong> ₹${shareAmount.toFixed(2)}
-      `;
     }
 
-    function generatePDF() {
-      const resultsElement = document.getElementById("pdfContent");
-      if (!resultsElement || !resultsElement.innerText.trim()) {
-        alert("Please calculate first before downloading PDF.");
-        return;
-      }
+    const annualAverage = (rentTotal / months) * 12;
 
-      html2canvas(resultsElement, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#ffffff"
-      }).then(canvas => {
-        const imgData = canvas.toDataURL("image/png");
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF({
-          orientation: "portrait",
-          unit: "mm",
-          format: "a4"
-        });
+    let multiplier = 1;
+    if (months <= 12) {
+      multiplier = 1;
+    } else if (months <= 24) {
+      multiplier = 3;
+    } else if (months <= 36) {
+      multiplier = 1;
+    } else if (months <= 60) {
+      multiplier = 3;
+    } else if (months <= 120) {
+      multiplier = 4;
+    } else if (months <= 240) {
+      multiplier = 5;
+    } else if (months <= 348) {
+      multiplier = 6;
+    } else {
+      multiplier = 7;
+    }
 
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
-        const imgProps = pdf.getImageProperties(imgData);
-        const imgWidth = pageWidth - 40;
-        const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
-        const x = 20;
-        const y = 30;
+    const stampDuty = Math.ceil((annualAverage * multiplier) * 0.04);
+    const registrationCharge = 1100;
+    const totalCharges = stampDuty + registrationCharge;
+    const shareAmount = totalCharges / 2;
 
-        pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(16);
-        pdf.text("Stamp Duty Calculation Report", pageWidth / 2, 20, { align: "center" });
+    window.calculationOutput = {
+      monthlyRent,
+      leasePeriod: months,
+      rentTotal,
+      annualAverage,
+      stampDuty,
+      registrationCharge,
+      totalCharges,
+      shareAmount
+    };
 
-        pdf.addImage(imgData, "PNG", x, y, imgWidth, imgHeight);
+    document.getElementById('results').innerHTML = `
+      <strong>Total Rent:</strong> ₹${rentTotal.toFixed(2)}<br>
+      <strong>Annual Avg Rent:</strong> ₹${annualAverage.toFixed(2)}<br>
+      <strong>Stamp Duty (4%):</strong> ₹${stampDuty}<br>
+      <strong>Registration Charges:</strong> ₹${registrationCharge}<br>
+      <strong>Total Charges:</strong> ₹${totalCharges}<br>
+      <strong>50% Share (if shared):</strong> ₹${shareAmount.toFixed(2)}
+    `;
+  }
 
-        pdf.setFontSize(10);
-        pdf.setTextColor(100);
-        const disclaimer = "Disclaimer: This report is generated from the free Commercial Rental Agreement Stamp Duty Calculator at www.merizameen.in";
-        const footerLines = pdf.splitTextToSize(disclaimer, pageWidth - 40);
-        pdf.text(footerLines, 20, pageHeight - 20);
+  function generatePDF() {
+    const resultsElement = document.getElementById("pdfContent");
+    if (!resultsElement || !resultsElement.innerText.trim()) {
+      alert("Please calculate first before downloading PDF.");
+      return;
+    }
 
-        pdf.save("Stamp_Duty_Calculation_MeriZameen.pdf");
+    html2canvas(resultsElement, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#ffffff"
+    }).then(canvas => {
+      const imgData = canvas.toDataURL("image/png");
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4"
       });
-    }
-  </script>
-</body>
-</html>
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgProps = pdf.getImageProperties(imgData);
+      const imgWidth = pageWidth - 40;
+      const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+      const x = 20;
+      const y = 30;
+
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(16);
+      pdf.text("Stamp Duty Calculation Report", pageWidth / 2, 20, { align: "center" });
+
+      pdf.addImage(imgData, "PNG", x, y, imgWidth, imgHeight);
+
+      pdf.setFontSize(10);
+      pdf.setTextColor(100);
+      const disclaimer = "Disclaimer: This report is generated from the free Commercial Rental Agreement Stamp Duty Calculator at www.merizameen.in";
+      const footerLines = pdf.splitTextToSize(disclaimer, pageWidth - 40);
+      pdf.text(footerLines, 20, pageHeight - 20);
+
+      pdf.save("Stamp_Duty_Calculation_MeriZameen.pdf");
+    });
+  }
+</script>
