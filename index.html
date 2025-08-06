@@ -99,7 +99,9 @@
       <button onclick="generatePDF()">Download PDF</button>
     </div>
 
-    <div class="results" id="results"></div>
+    <div id="pdfContent">
+      <div class="results" id="results"></div>
+    </div>
   </div>
 
   <script>
@@ -157,15 +159,16 @@
     }
 
     function generatePDF() {
-      const resultsElement = document.getElementById("results");
-      if (!resultsElement.innerHTML.trim()) {
+      const resultsElement = document.getElementById("pdfContent");
+      if (!resultsElement || !resultsElement.innerText.trim()) {
         alert("Please calculate first before downloading PDF.");
         return;
       }
 
       html2canvas(resultsElement, {
         scale: 2,
-        useCORS: true
+        useCORS: true,
+        backgroundColor: "#ffffff"
       }).then(canvas => {
         const imgData = canvas.toDataURL("image/png");
         const { jsPDF } = window.jspdf;
@@ -181,7 +184,7 @@
         const imgWidth = pageWidth - 40;
         const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
         const x = 20;
-        const y = (pageHeight - imgHeight) / 2;
+        const y = 30;
 
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(16);
