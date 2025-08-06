@@ -21,9 +21,9 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
     h2 {
-    color: #006400; /* Dark green */
-  text-align: center;
-  margin-bottom: 20px;
+      color: #006400;
+      text-align: center;
+      margin-bottom: 20px;
     }
     label {
       margin-top: 15px;
@@ -154,52 +154,67 @@
         <strong>50% Share (if shared):</strong> ₹${shareAmount.toFixed(2)}
       `;
     }
-function generatePDF() {
-  const data = window.calculationOutput;
-  if (!data) {
-    alert("Please calculate first before downloading PDF.");
-    return;
-  }
 
-  const doc = new jsPDF();
+    function generatePDF() {
+      const data = window.calculationOutput;
+      if (!data) {
+        alert("Please calculate first before downloading PDF.");
+        return;
+      }
 
-  // Header
-  doc.setFontSize(18);
-  doc.setFont("helvetica", "bold");
-  doc.text("Stamp Duty Calculation Report", 20, 20);
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
 
-  // Subheading
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "normal");
-  doc.text("Calculation Summary", 20, 35);
-  doc.setLineWidth(0.5);
-  doc.line(20, 37, 190, 37);
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const leftMargin = 20;
+      let y = 20;
+      const lineHeight = 8;
 
-  // Values
-  const lines = [
-    `Lease Duration: ${data.leasePeriod} months`,
-    `Total Rent: ₹${data.rentTotal.toFixed(2)}`,
-    `Annual Avg Rent: ₹${data.annualAverage.toFixed(2)}`,
-    `Stamp Duty (4%): ₹${data.stampDuty}`,
-    `Registration Charges: ₹${data.registrationCharge}`,
-    `Total Charges: ₹${data.totalCharges}`,
-    `50% Share (if shared): ₹${data.shareAmount.toFixed(2)}`
-  ];
+      // Header
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.text("Stamp Duty Calculation Report", pageWidth / 2, y, { align: 'center' });
 
-  let y = 45;
-  lines.forEach(line => {
-    doc.text(line, 20, y);
-    y += 10;
-  });
+      y += 10;
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+      doc.text("Calculation Summary", leftMargin, y);
+      y += 2;
+      doc.setLineWidth(0.3);
+      doc.line(leftMargin, y, pageWidth - leftMargin, y);
+      y += 6;
 
-  // Footer
-  doc.setFontSize(10);
-  doc.setTextColor(100);
-  doc.text("This report is generated from the free Commercial Rental Agreement Stamp Duty Calculator by www.merizameen.in", 20, y + 15);
+      // Body
+      const lines = [
+        `Monthly Rent: ₹${data.monthlyRent.toFixed(2)}`,
+        `Lease Duration: ${data.leasePeriod} months`,
+        `Total Rent: ₹${data.rentTotal.toFixed(2)}`,
+        `Annual Avg Rent: ₹${data.annualAverage.toFixed(2)}`,
+        `Stamp Duty (4%): ₹${data.stampDuty}`,
+        `Registration Charges: ₹${data.registrationCharge}`,
+        `Total Charges: ₹${data.totalCharges}`,
+        `50% Share (if shared): ₹${data.shareAmount.toFixed(2)}`
+      ];
 
-  doc.save("Stamp_Duty_Calculation_MeriZameen.pdf");
-}
+      lines.forEach(line => {
+        doc.text(line, leftMargin, y);
+        y += lineHeight;
+      });
 
+      // Footer
+      y += 10;
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      const disclaimer = "Disclaimer: This report is generated from the free Commercial Rental Agreement Stamp Duty Calculator at www.merizameen.in";
+      const footerLines = doc.splitTextToSize(disclaimer, pageWidth - 2 * leftMargin);
+      doc.text(footerLines, leftMargin, y);
+
+      doc.save("Stamp_Duty_Calculation_MeriZameen.pdf");
+    }
   </script>
 </body>
 </html>
