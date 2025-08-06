@@ -155,6 +155,12 @@
       `;
     }
 function generatePDF() {
+  const data = window.calculationOutput;
+  if (!data) {
+    alert("Please calculate first before downloading PDF.");
+    return;
+  }
+
   const doc = new jsPDF();
 
   // Header
@@ -171,14 +177,13 @@ function generatePDF() {
 
   // Values
   const lines = [
-    `Lease Duration: ${leaseTerm} ${termUnit}`,
-    `Base Annual Rent: ₹${baseAnnualRent.toFixed(2)}`,
-    `Average Annual Rent (with increase): ₹${averageAnnualRent.toFixed(2)}`,
-    `Multiplier Applied: ${multiplier} x Annual Rent`,
-    `Stamp Duty (4% of adjusted rent): ₹${stampDuty.toFixed(2)}`,
-    `Court Fee (1% of Avg. Annual Rent): ₹${courtFee.toFixed(2)}`,
-    `Total Payable: ₹${totalPayable.toFixed(2)}`,
-    `If Shared (50% Each): ₹${(totalPayable / 2).toFixed(2)}`
+    `Lease Duration: ${data.leasePeriod} months`,
+    `Total Rent: ₹${data.rentTotal.toFixed(2)}`,
+    `Annual Avg Rent: ₹${data.annualAverage.toFixed(2)}`,
+    `Stamp Duty (4%): ₹${data.stampDuty}`,
+    `Registration Charges: ₹${data.registrationCharge}`,
+    `Total Charges: ₹${data.totalCharges}`,
+    `50% Share (if shared): ₹${data.shareAmount.toFixed(2)}`
   ];
 
   let y = 45;
@@ -194,7 +199,6 @@ function generatePDF() {
 
   doc.save("Stamp_Duty_Calculation_MeriZameen.pdf");
 }
-
 
   </script>
 </body>
